@@ -251,6 +251,52 @@
     }
     tbody tr:nth-child(even) td { background: #fafcfd; }
     tbody tr:hover td { background: #f1f7f9; }
+    .detail-table .freeze-col-1,
+    .detail-table .freeze-col-2,
+    .detail-table .freeze-col-3,
+    .detail-table .freeze-col-4,
+    .detail-table .freeze-col-5 {
+      position: sticky;
+      background: inherit;
+      box-sizing: border-box;
+      z-index: 2;
+    }
+    .detail-table th.freeze-col-1,
+    .detail-table th.freeze-col-2,
+    .detail-table th.freeze-col-3,
+    .detail-table th.freeze-col-4,
+    .detail-table th.freeze-col-5 {
+      z-index: 4;
+      background: #f5f8fb;
+    }
+    .detail-table tbody .freeze-col-1,
+    .detail-table tbody .freeze-col-2,
+    .detail-table tbody .freeze-col-3,
+    .detail-table tbody .freeze-col-4,
+    .detail-table tbody .freeze-col-5 { background: #fff; }
+    .detail-table tbody tr:nth-child(even) .freeze-col-1,
+    .detail-table tbody tr:nth-child(even) .freeze-col-2,
+    .detail-table tbody tr:nth-child(even) .freeze-col-3,
+    .detail-table tbody tr:nth-child(even) .freeze-col-4,
+    .detail-table tbody tr:nth-child(even) .freeze-col-5 { background: #fafcfd; }
+    .detail-table tbody tr:hover .freeze-col-1,
+    .detail-table tbody tr:hover .freeze-col-2,
+    .detail-table tbody tr:hover .freeze-col-3,
+    .detail-table tbody tr:hover .freeze-col-4,
+    .detail-table tbody tr:hover .freeze-col-5 { background: #f1f7f9; }
+    .region-detail-table.freeze-4 .freeze-col-1 { left: 0; width: 88px; min-width: 88px; }
+    .region-detail-table.freeze-4 .freeze-col-2 { left: 88px; width: 88px; min-width: 88px; }
+    .region-detail-table.freeze-4 .freeze-col-3 { left: 176px; width: 96px; min-width: 96px; }
+    .region-detail-table.freeze-4 .freeze-col-4 { left: 272px; width: 112px; min-width: 112px; box-shadow: 1px 0 0 #d9e3ec; }
+    .region-detail-table.freeze-5 .freeze-col-1 { left: 0; width: 104px; min-width: 104px; }
+    .region-detail-table.freeze-5 .freeze-col-2 { left: 104px; width: 88px; min-width: 88px; }
+    .region-detail-table.freeze-5 .freeze-col-3 { left: 192px; width: 96px; min-width: 96px; }
+    .region-detail-table.freeze-5 .freeze-col-4 { left: 288px; width: 96px; min-width: 96px; }
+    .region-detail-table.freeze-5 .freeze-col-5 { left: 384px; width: 112px; min-width: 112px; box-shadow: 1px 0 0 #d9e3ec; }
+    .campaign-detail-table .freeze-col-1 { left: 0; width: 310px; min-width: 310px; }
+    .campaign-detail-table .freeze-col-2 { left: 310px; width: 88px; min-width: 88px; }
+    .campaign-detail-table .freeze-col-3 { left: 398px; width: 96px; min-width: 96px; }
+    .campaign-detail-table .freeze-col-4 { left: 494px; width: 112px; min-width: 112px; box-shadow: 1px 0 0 #d9e3ec; }
     .monthly-roi-table tbody .freeze-col-1,
     .monthly-roi-table tbody .freeze-col-2,
     .monthly-roi-table tbody .freeze-col-3 { background: #fff; }
@@ -393,7 +439,7 @@
               </div>
               <span class="caption" id="regionCaption"></span>
             </div>
-            <div class="table-wrap region-table-wrap"><table id="regionTable"></table></div>
+            <div class="table-wrap region-table-wrap"><table id="regionTable" class="detail-table region-detail-table"></table></div>
           </section>
           <section class="card table-card">
             <div class="section-title">
@@ -407,7 +453,7 @@
               </div>
               <span class="caption" id="campaignCaption"></span>
             </div>
-            <div class="table-wrap campaign-table-wrap"><table id="campaignTable"></table></div>
+            <div class="table-wrap campaign-table-wrap"><table id="campaignTable" class="detail-table campaign-detail-table"></table></div>
           </section>
         </div>
       </section>
@@ -804,12 +850,13 @@
       byId('monthlyRoiTable').innerHTML = `<thead><tr><th class="freeze-col-1">月份</th><th class="freeze-col-2">简称</th><th class="freeze-col-3">国家</th>${ROI_METRICS.map(m => `<th class="num">${metricLabel(m)}</th>`).join('')}${LTV_RATIO_METRICS.map(m => `<th class="num">${m.replace('LTV', '')}</th>`).join('')}</tr></thead><tbody>${tableRows || '<tr><td colspan="20" class="muted">当前筛选无数据</td></tr>'}</tbody>`;
       byId('monthlyRoiCaption').textContent = mode === 'country' ? `${month} · 每个国家 ROI 对比 · 按${metricLabel(metric)}排序` : `${country || '未选择国家'} · 同国家分月 ROI 对比`;
     }
-    function renderMetricHeaders() {
-      return '<th class="num">费用</th><th class="num">首页设备</th><th class="num">首充</th><th class="num">首页设备成本</th><th class="num">首日充值成本</th><th class="num">首日充值率</th><th class="num">首日ROI</th><th class="num">ROI1</th><th class="num">ROI3</th><th class="num">ROI7</th><th class="num">ROI14</th><th class="num">ROI30</th><th class="num">ROI60</th><th class="num">ROI90</th><th class="num">ROI120</th><th class="num">LTV1/0</th><th class="num">LTV3/1</th><th class="num">LTV7/3</th><th class="num">LTV14/7</th><th class="num">LTV30/14</th><th class="num">LTV60/30</th><th class="num">LTV90/60</th><th class="num">LTV120/90</th>';
+    function renderMetricHeaders(feeFreezeClass = '') {
+      const feeClass = `num ${feeFreezeClass}`.trim();
+      return `<th class="${feeClass}">费用</th><th class="num">首页设备</th><th class="num">首充</th><th class="num">首页设备成本</th><th class="num">首日充值成本</th><th class="num">首日充值率</th><th class="num">首日ROI</th><th class="num">ROI1</th><th class="num">ROI3</th><th class="num">ROI7</th><th class="num">ROI14</th><th class="num">ROI30</th><th class="num">ROI60</th><th class="num">ROI90</th><th class="num">ROI120</th><th class="num">LTV1/0</th><th class="num">LTV3/1</th><th class="num">LTV7/3</th><th class="num">LTV14/7</th><th class="num">LTV30/14</th><th class="num">LTV60/30</th><th class="num">LTV90/60</th><th class="num">LTV120/90</th>`;
     }
-    function metricRowCells(row, prev = {}) {
+    function metricRowCells(row, prev = {}, feeFreezeClass = '') {
       return [
-        metricCell('费用', row['费用'], money(row['费用']), prev['费用']),
+        metricCell('费用', row['费用'], money(row['费用']), prev['费用'], feeFreezeClass),
         metricCell('进入首页设备数', row['进入首页设备数'], num(row['进入首页设备数']), prev['进入首页设备数']),
         metricCell('首日充值人数', row['首日充值人数'], num(row['首日充值人数']), prev['首日充值人数']),
         metricCell('进入首页设备成本', row['进入首页设备成本'], money(row['进入首页设备成本']), prev['进入首页设备成本']),
@@ -834,10 +881,10 @@
         metricCell('LTV120/LTV90', row['LTV120/LTV90'], small(row['LTV120/LTV90']), prev['LTV120/LTV90'])
       ];
     }
-    function metricCell(metric, value, display, baseline = null) {
+    function metricCell(metric, value, display, baseline = null, extraCls = '') {
       const d = baseline && baseline[metric] !== undefined ? (value !== null && baseline[metric] ? (value - baseline[metric]) / baseline[metric] : null) : null;
       const cls = deltaClass(metric, d);
-      return [display || '-', `num ${cls}`.trim()];
+      return [display || '-', `num ${cls} ${extraCls}`.trim()];
     }
     function renderTables() {
       const metric = byId('metricSelect').value || '费用';
@@ -913,11 +960,17 @@
       const regionRows = Array.from(grouped.values()).map(g => ({ '时间': g['时间'], '国家': g['国家'], '国家名称': g['国家名称'], '媒体类型': g['媒体类型'], ...aggregateRows(g.rows) }))
         .sort((a, b) => regionByDay && a['时间'] !== b['时间'] ? b['时间'].localeCompare(a['时间']) : (metric.includes('成本') ? (a[metric] || Infinity) - (b[metric] || Infinity) : (b[metric] || 0) - (a[metric] || 0)));
       byId('regionCaption').textContent = `${sectionLabel(regionFilters)} · ${regionByDay ? '分日统计' : '周期汇总'} · 按${metric}排序`;
-      const regionHeaders = regionByDay ? `<th>日期</th><th>简称</th><th>国家</th><th>渠道</th>` : `<th>简称</th><th>国家</th><th>渠道</th>`;
-      byId('regionTable').innerHTML = `<thead><tr>${regionHeaders}${renderMetricHeaders()}</tr></thead><tbody>` + regionRows.map(r => {
+      const regionFreezeClass = regionByDay ? 'freeze-col-5' : 'freeze-col-4';
+      const regionHeaders = regionByDay
+        ? `<th class="nowrap freeze-col-1">日期</th><th class="nowrap freeze-col-2">简称</th><th class="nowrap freeze-col-3">国家</th><th class="nowrap freeze-col-4">渠道</th>`
+        : `<th class="nowrap freeze-col-1">简称</th><th class="nowrap freeze-col-2">国家</th><th class="nowrap freeze-col-3">渠道</th>`;
+      byId('regionTable').className = `detail-table region-detail-table ${regionByDay ? 'freeze-5' : 'freeze-4'}`;
+      byId('regionTable').innerHTML = `<thead><tr>${regionHeaders}${renderMetricHeaders(regionFreezeClass)}</tr></thead><tbody>` + regionRows.map(r => {
         const prev = aggregateRows(previousRegionGroups.get(`${r['国家']}||${r['媒体类型']}`) || []);
-        const dims = regionByDay ? [[r['时间'], 'nowrap'], [r['国家'], 'nowrap'], [r['国家名称'] || r['国家'], 'nowrap'], [r['媒体类型'], 'nowrap']] : [[r['国家'], 'nowrap'], [r['国家名称'] || r['国家'], 'nowrap'], [r['媒体类型'], 'nowrap']];
-        return `<tr>${rowCells([...dims, ...metricRowCells(r, prev)])}</tr>`;
+        const dims = regionByDay
+          ? [[r['时间'], 'nowrap freeze-col-1'], [r['国家'], 'nowrap freeze-col-2'], [r['国家名称'] || r['国家'], 'nowrap freeze-col-3'], [r['媒体类型'], 'nowrap freeze-col-4']]
+          : [[r['国家'], 'nowrap freeze-col-1'], [r['国家名称'] || r['国家'], 'nowrap freeze-col-2'], [r['媒体类型'], 'nowrap freeze-col-3']];
+        return `<tr>${rowCells([...dims, ...metricRowCells(r, prev, regionFreezeClass)])}</tr>`;
       }).join('') + `</tbody>`;
       const previousCampaignGroups = new Map();
       for (const r of previousRowsForSection(campaignFilters)) {
@@ -932,9 +985,10 @@
         campaignGroups.get(key).rows.push(r);
       }
       const campaigns = Array.from(campaignGroups.values()).map(g => ({ '广告系列名称': g['广告系列名称'], '国家': g['国家'], '媒体类型': g['媒体类型'], ...aggregateRows(g.rows) })).sort((a, b) => (b['费用'] || 0) - (a['费用'] || 0));
-      byId('campaignTable').innerHTML = `<thead><tr><th>广告系列</th><th>国家</th><th>渠道</th>${renderMetricHeaders()}</tr></thead><tbody>` + campaigns.map(r => {
+      byId('campaignTable').className = 'detail-table campaign-detail-table';
+      byId('campaignTable').innerHTML = `<thead><tr><th class="freeze-col-1">广告系列</th><th class="freeze-col-2">国家</th><th class="freeze-col-3">渠道</th>${renderMetricHeaders('freeze-col-4')}</tr></thead><tbody>` + campaigns.map(r => {
         const prev = aggregateRows(previousCampaignGroups.get(`${r['广告系列名称']}||${r['国家']}||${r['媒体类型']}`) || []);
-        return `<tr>${rowCells([[r['广告系列名称'], 'campaign'], [r['国家'], 'nowrap'], [r['媒体类型'], 'nowrap'], ...metricRowCells(r, prev)])}</tr>`;
+        return `<tr>${rowCells([[r['广告系列名称'], 'campaign freeze-col-1'], [r['国家'], 'nowrap freeze-col-2'], [r['媒体类型'], 'nowrap freeze-col-3'], ...metricRowCells(r, prev, 'freeze-col-4')])}</tr>`;
       }).join('') + `</tbody>`;
       byId('campaignCaption').textContent = `${sectionLabel(campaignFilters)} · 按费用排序`;
     }
