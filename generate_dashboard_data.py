@@ -106,6 +106,21 @@ def clean_text(value):
     return s or None
 
 
+def fill_missing_spend_campaigns(items):
+    campaign_names = defaultdict(set)
+    for row in items:
+        name = clean_text(row.get('广告系列名称'))
+        if name:
+            campaign_names[(row['国家'], row['媒体类型'])].add(name)
+
+    for row in items:
+        if clean_text(row.get('广告系列名称')):
+            continue
+        names = sorted(campaign_names.get((row['国家'], row['媒体类型']), set()))
+        row['广告系列名称'] = names[0] if len(names) == 1 else '未填写广告系列'
+    return items
+
+
 def load_base():
     rows = read_rows(BASE_FILE, index=0)
     header = rows[0]
@@ -168,7 +183,7 @@ def load_spend():
             '广告系列名称': clean_text(record.get('广告系列')) or '',
             '费用': to_float(record.get('消耗')) or 0,
         })
-    return items
+    return fill_missing_spend_campaigns(items)
 
 
 def aggregate(items, keys):
