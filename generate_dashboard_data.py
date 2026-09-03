@@ -108,16 +108,25 @@ def clean_text(value):
 
 def fill_missing_spend_campaigns(items):
     campaign_names = defaultdict(set)
+    first_named_date = {}
     for row in items:
         name = clean_text(row.get('广告系列名称'))
         if name:
-            campaign_names[(row['国家'], row['媒体类型'])].add(name)
+            key = (row['国家'], row['媒体类型'])
+            campaign_names[key].add(name)
+            row_date = row.get('时间')
+            if row_date:
+                first_named_date[key] = min(first_named_date.get(key, row_date), row_date)
 
     for row in items:
         if clean_text(row.get('广告系列名称')):
             continue
-        names = sorted(campaign_names.get((row['国家'], row['媒体类型']), set()))
-        row['广告系列名称'] = names[0] if len(names) == 1 else '未填写广告系列'
+        key = (row['国家'], row['媒体类型'])
+        names = sorted(campaign_names.get(key, set()))
+        row_date = row.get('时间')
+        named_date = first_named_date.get(key)
+        if names and named_date and row_date and row_date >= named_date:
+            row['广告系列名称'] = names[0] if len(names) == 1 else '未填写广告系列'
     return items
 
 
