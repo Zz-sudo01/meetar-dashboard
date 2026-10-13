@@ -259,28 +259,52 @@ def main():
         spend_daily_groups[(row['时间'], row['国家'], row['媒体类型'])] += row['费用']
 
     base_group_counts = defaultdict(int)
+    base_series_counts = defaultdict(int)
     for row in base:
         base_group_counts[(row['时间'], row['国家'], row['媒体类型'])] += 1
+        base_series_counts[(row['时间'], row['国家'], row['媒体类型'], clean_text(row.get('广告系列名称')) or '')] += 1
 
-    # Base rows with daily spend attached by date + country + media type.
+    matched_spend_groups = defaultdict(float)
+    for key, series_spend in spend_by_series.items():
+        if base_series_counts.get(key, 0):
+            matched_spend_groups[(key[0], key[1], key[2])] += series_spend
+
+    fallback_base_counts = defaultdict(int)
+    for row in base:
+        group_key = (row['时间'], row['国家'], row['媒体类型'])
+        series_key = (row['时间'], row['国家'], row['媒体类型'], clean_text(row.get('广告系列名称')) or '')
+        if not spend_by_series.get(series_key):
+            fallback_base_counts[group_key] += 1
+
+    # Base rows with spend attached by exact campaign when possible.
+    # If source spend has no usable campaign split, fall back to group-level allocation.
     detail = []
     for row in base:
         out = dict(row)
-        key = (row['时间'], row['国家'], row['媒体类型'])
-        count = base_group_counts[key] or 1
-        out['费用'] = (spend_by_group[key] / count) if spend_by_group[key] else 0
+        group_key = (row['时间'], row['国家'], row['媒体类型'])
+        series_key = (row['时间'], row['国家'], row['媒体类型'], clean_text(row.get('广告系列名称')) or '')
+        series_count = base_series_counts[series_key] or 1
+        if spend_by_series.get(series_key):
+            out['费用'] = spend_by_series[series_key] / series_count
+        else:
+            unmatched_spend = spend_by_group[group_key] - matched_spend_groups[group_key]
+            fallback_count = fallback_base_counts[group_key] or 0
+            out['费用'] = (unmatched_spend / fallback_count) if fallback_count and unmatched_spend > 0 else 0
         detail.append(add_derived(out, ['ltv0', 'ltv1', 'ltv3', 'ltv7', 'ltv14', 'ltv30', 'ltv60', 'ltv90', 'ltv120']))
 
-    # Preserve spend that has no matching base row by creating a spend-only synthetic row.
-    for key, spend_rows in spend_group_rows.items():
-        if base_group_counts.get(key, 0):
+    # Preserve campaign spend that has no matching base row by creating spend-only synthetic rows.
+    for key, series_spend in spend_by_series.items():
+        if base_series_counts.get(key, 0):
+            continue
+        group_key = (key[0], key[1], key[2])
+        if fallback_base_counts.get(group_key, 0) and spend_by_group[group_key] > matched_spend_groups[group_key]:
             continue
         synthetic = {
-            '时间': key[0],
+            '时间': group_key[0],
             'apm': 'MEETAR',
-            '媒体类型': key[2],
-            '国家': key[1],
-            '广告系列名称': clean_text(spend_rows[0].get('广告系列名称')) or '',
+            '媒体类型': group_key[2],
+            '国家': group_key[1],
+            '广告系列名称': clean_text(key[3]) or '',
             '归因设备数': 0,
             '注册设备数': 0,
             '进入首页设备数': 0,
@@ -302,7 +326,7 @@ def main():
         for col in ['ltv0', 'ltv1', 'ltv3', 'ltv7', 'ltv14', 'ltv30', 'ltv60', 'ltv90', 'ltv120',
                     'arpu0', 'arpu1', 'arpu3', 'arpu7', 'arpu14', 'arpu30', 'arpu60', 'arpu90', 'arpu120']:
             synthetic[col] = None
-        synthetic['费用'] = spend_by_group[key]
+        synthetic['费用'] = series_spend
         detail.append(add_derived(synthetic, ['ltv0', 'ltv1', 'ltv3', 'ltv7', 'ltv14', 'ltv30', 'ltv60', 'ltv90', 'ltv120']))
 
     daily = []
