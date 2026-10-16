@@ -236,27 +236,56 @@ def main():
     common_dates = sorted(set(base_dates) & set(spend_dates))
     latest_day = common_dates[-1] if common_dates else (all_dates[-1] if all_dates else None)
 
+    base_campaign_countries = defaultdict(set)
+    spend_campaign_countries = defaultdict(set)
+    for row in base:
+        name = clean_text(row.get('广告系列名称'))
+        if name:
+            base_campaign_countries[(row['时间'], row['媒体类型'], name)].add(row['国家'])
+    for row in spend:
+        name = clean_text(row.get('广告系列名称'))
+        if name:
+            spend_campaign_countries[(row['时间'], row['媒体类型'], name)].add(row['国家'])
+
+    # Correct source country mismatches only when the campaign maps to one country on each side.
+    spend_country_overrides = {}
+    for key, base_countries in base_campaign_countries.items():
+        spend_countries = spend_campaign_countries.get(key, set())
+        if len(base_countries) == 1 and len(spend_countries) == 1:
+            base_country = next(iter(base_countries))
+            spend_country = next(iter(spend_countries))
+            if base_country != spend_country:
+                spend_country_overrides[key] = base_country
+
+    def spend_country(row):
+        name = clean_text(row.get('广告系列名称'))
+        if name:
+            key = (row['时间'], row['媒体类型'], name)
+            return spend_country_overrides.get(key, row['国家'])
+        return row['国家']
+
     spend_by_date = defaultdict(float)
     spend_by_group = defaultdict(float)
     spend_by_series = defaultdict(float)
     spend_group_rows = defaultdict(list)
     for row in spend:
+        country = spend_country(row)
         spend_by_date[row['时间']] += row['费用']
-        spend_by_group[(row['时间'], row['国家'], row['媒体类型'])] += row['费用']
-        spend_by_series[(row['时间'], row['国家'], row['媒体类型'], row['广告系列名称'])] += row['费用']
-        spend_group_rows[(row['时间'], row['国家'], row['媒体类型'])].append(row)
+        spend_by_group[(row['时间'], country, row['媒体类型'])] += row['费用']
+        spend_by_series[(row['时间'], country, row['媒体类型'], row['广告系列名称'])] += row['费用']
+        spend_group_rows[(row['时间'], country, row['媒体类型'])].append(row)
 
     # Group spend series for ranking views.
     series_groups = defaultdict(float)
     series_meta = {}
     for row in spend:
-        key = (row['广告系列名称'], row['国家'], row['媒体类型'])
+        key = (row['广告系列名称'], spend_country(row), row['媒体类型'])
         series_groups[key] += row['费用']
         series_meta[key] = {'广告系列名称': key[0], '国家': key[1], '媒体类型': key[2]}
 
     spend_daily_groups = defaultdict(float)
     for row in spend:
-        spend_daily_groups[(row['时间'], row['国家'], row['媒体类型'])] += row['费用']
+        spend_daily_groups[(row['时间'], spend_country(row), row['媒体类型'])] += row['费用']
 
     base_group_counts = defaultdict(int)
     base_series_counts = defaultdict(int)
