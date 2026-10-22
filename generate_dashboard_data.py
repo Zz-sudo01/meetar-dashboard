@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import json
 import os
+import re
 import subprocess
 import zipfile
 import xml.etree.ElementTree as ET
@@ -247,12 +248,18 @@ def main():
         if name:
             spend_campaign_countries[(row['时间'], row['媒体类型'], name)].add(row['国家'])
 
-    # Correct source country mismatches only when the campaign maps to one country on each side.
+    # Resolve multi-country base campaigns only when the name identifies one base country.
     spend_country_overrides = {}
     for key, base_countries in base_campaign_countries.items():
         spend_countries = spend_campaign_countries.get(key, set())
-        if len(base_countries) == 1 and len(spend_countries) == 1:
-            base_country = next(iter(base_countries))
+        if len(spend_countries) == 1:
+            candidates = base_countries
+            if len(candidates) > 1:
+                tokens = set(re.split(r'[^A-Z0-9]+', key[2].upper()))
+                candidates = {country for country in candidates if country and country.upper() in tokens}
+            if len(candidates) != 1:
+                continue
+            base_country = next(iter(candidates))
             spend_country = next(iter(spend_countries))
             if base_country != spend_country:
                 spend_country_overrides[key] = base_country
